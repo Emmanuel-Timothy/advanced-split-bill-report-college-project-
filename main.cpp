@@ -4,9 +4,6 @@
 
 using namespace std;
 
-const int MAX_PEOPLE = 100;
-const int MAX_ITEMS = 100;
-
 struct Item {
     string name;
     double price;
@@ -14,81 +11,79 @@ struct Item {
 
 struct Person {
     string name;
-    double consumption[MAX_ITEMS];
-    double subtotal;
+    double* qty;
+    double subtotal = 0;
 };
 
 int main() {
-    int numPeople, numItems;
+    int nPeople, nItems;
 
     cout << "Enter number of people: ";
-    cin >> numPeople;
+    cin >> nPeople;
+    Person* people = new Person[nPeople];
 
-    Person people[MAX_PEOPLE];
-
-    for (int i = 0; i < numPeople; ++i) {
+    for (int i = 0; i < nPeople; ++i) {
         cout << "Person " << i + 1 << " name: ";
         cin >> people[i].name;
-        people[i].subtotal = 0;
     }
 
     cout << "\nEnter number of items: ";
-    cin >> numItems;
+    cin >> nItems;
+    Item* items = new Item[nItems];
 
-    Item items[MAX_ITEMS];
-
-    for (int i = 0; i < numItems; ++i) {
-        cout << "Item " << i + 1 << " name & price per portion: ";
+    for (int i = 0; i < nItems; ++i) {
+        cout << "Item " << i + 1 << " name & price: ";
         cin >> items[i].name >> items[i].price;
     }
 
-    cout << "\n--- Enter Portion Eaten (e.g., enter '6 9' for 6/9, or '1 1' for 1 whole, '0 1' for none) ---\n";
-    for (int i = 0; i < numPeople; ++i) {
+    cout << "\n--- Enter Portion Eaten (e.g. '6 9' for 6/9, '1 1' for whole, '0 1' for none) ---\n";
+    for (int i = 0; i < nPeople; ++i) {
+        people[i].qty = new double[nItems];
         cout << "\nConsumption for " << people[i].name << ":\n";
         
-        for (int j = 0; j < numItems; ++j) {
-            double eaten, totalPortions;
-            
+        for (int j = 0; j < nItems; ++j) {
+            double eaten, total;
             cout << "  " << items[j].name << " (Eaten / Total): ";
-            cin >> eaten >> totalPortions;
+            cin >> eaten >> total;
 
-            double qty = (totalPortions > 0) ? (eaten / totalPortions) : 0;
-            
-            people[i].consumption[j] = qty;
-            people[i].subtotal += qty * items[j].price;
+            double portion = (total > 0) ? (eaten / total) : 0;
+            people[i].qty[j] = portion;
+            people[i].subtotal += portion * items[j].price;
         }
     }
 
-    double taxPercent, totalSubtotal = 0;
+    double taxPct, grandSubtotal = 0;
     cout << "\nEnter tax percentage: ";
-    cin >> taxPercent;
+    cin >> taxPct;
 
-    for (int i = 0; i < numPeople; ++i) {
-        totalSubtotal += people[i].subtotal;
-    }
-    
-    double totalTax = totalSubtotal * (taxPercent / 100.0);
+    for (int i = 0; i < nPeople; ++i) grandSubtotal += people[i].subtotal;
+    double grandTax = grandSubtotal * (taxPct / 100.0);
 
-    // Print Receipt
     cout << "\n================ BILL RESULT ================\n" << fixed << setprecision(0);
-    for (int i = 0; i < numPeople; ++i) {
-        double personTax = (totalSubtotal > 0) ? (people[i].subtotal / totalSubtotal) * totalTax : 0;
+    for (int i = 0; i < nPeople; ++i) {
+        double personTax = (grandSubtotal > 0) ? (people[i].subtotal / grandSubtotal) * grandTax : 0;
         cout << "\nPerson: " << people[i].name << "\nItems:\n";
         
-        for (int j = 0; j < numItems; ++j) {
-            if (people[i].consumption[j] > 0) {
+        for (int j = 0; j < nItems; ++j) {
+            if (people[i].qty[j] > 0) {
                 cout << "  - " << items[j].name << " x" << setprecision(2) 
-                     << people[i].consumption[j] << " = Rp" << setprecision(0) 
-                     << people[i].consumption[j] * items[j].price << "\n";
+                     << people[i].qty[j] << " = Rp" << setprecision(0) 
+                     << people[i].qty[j] * items[j].price << "\n";
             }
         }
-        cout << "Subtotal: Rp" << people[i].subtotal << "\nTax: Rp" << personTax 
-             << "\nTotal to pay: Rp" << people[i].subtotal + personTax << "\n";
+        cout << "Subtotal: Rp" << people[i].subtotal 
+             << "\nTax: Rp" << personTax 
+             << "\nTotal: Rp" << people[i].subtotal + personTax << "\n";
     }
 
     cout << "=============================================\n";
-    cout << "Grand Subtotal: Rp" << totalSubtotal << "\nTotal Tax: Rp" << totalTax 
-         << "\nGrand Total: Rp" << totalSubtotal + totalTax << "\n";
+    cout << "Grand Subtotal: Rp" << grandSubtotal 
+         << "\nGrand Tax: Rp" << grandTax 
+         << "\nGrand Total: Rp" << grandSubtotal + grandTax << "\n";
+
+    for (int i = 0; i < nPeople; ++i) delete[] people[i].qty;
+    delete[] people;
+    delete[] items;
 
     return 0;
 }
